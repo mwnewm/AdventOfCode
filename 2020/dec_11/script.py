@@ -1,125 +1,73 @@
 import copy
+from time import perf_counter
+
+def count_neighbors(row, col, input_chart, limit=8, part2=False):
+    num_occupied = 0
+    for i, j in [(0, 1), (1, 0), (-1, 0), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)]:
+        neighbor_row, neighbor_col = i + row, j + col
+        while neighbor_row > -1 and neighbor_row < NUM_ROWS and neighbor_col > -1 and neighbor_col < NUM_COLUMNS:
+            if input_chart[neighbor_row][neighbor_col] != '.':
+                num_occupied += 1 if input_chart[neighbor_row][neighbor_col] == '#' else 0
+                if num_occupied == limit:
+                    return num_occupied
+                break
+            if not part2:
+                break
+            else:
+                neighbor_row += i
+                neighbor_col += j
+    return num_occupied
 
 def process_part1(input_chart):
     new_chart = copy.deepcopy(input_chart)
-    for i, row in enumerate(input_chart):
-        for j, seat in enumerate(row):
-            adjacent = []
-            if seat != '.':
-                up = None if i == 0 else input_chart[i-1][j]
-                down = None if i == len(input_chart)-1 else input_chart[i+1][j]
-                right = None if j == len(row)-1 else input_chart[i][j+1]
-                left = None if j == 0 else input_chart[i][j-1]
-                diag_downL = None if not (down and left) else input_chart[i+1][j-1]
-                diag_downR = None if not (down and right) else input_chart[i+1][j+1]
-                diag_upL = None if not (up and left) else input_chart[i-1][j-1]
-                diag_upR = None if not (up and right) else input_chart[i-1][j+1]
-                adjacent = [up, down, right, left, diag_downL, diag_downR, diag_upL, diag_upR]
-                if seat == 'L' and '#' not in adjacent:
-                    new_chart[i][j] = '#'
-                elif seat == '#' and adjacent.count('#')>3:
-                    new_chart[i][j] = 'L'
+    for row in range(len(input_chart)):
+        for col in range(len(input_chart[row])):
+            if input_chart[row][col] == 'L' and count_neighbors(row, col, input_chart) == 0:
+                new_chart[row][col] = '#'
+            elif input_chart[row][col] == '#' and count_neighbors(row, col, input_chart, 4) >= 4:
+                new_chart[row][col] = 'L'
     return new_chart
-
-def look(i, j, input_chart, direction):
-    vision = 1
-    if direction == 'up':
-        while i-vision > -1 and input_chart[i-vision][j] == '.':
-            vision += 1
-        return '.' if i-vision < 0 else input_chart[i-vision][j]
-    
-    elif direction == 'down':
-        while i+vision < len(input_chart) and input_chart[i+vision][j] == '.':
-            vision += 1
-        return '.' if i+vision > len(input_chart)-1 else input_chart[i+vision][j]
-    
-    elif direction == 'left':
-        while j-vision > -1 and input_chart[i][j-vision] == '.':
-            vision += 1
-        return '.' if j-vision < 0 else input_chart[i][j-vision]
-    
-    elif direction == 'right':
-        while j+vision < len(input_chart[i]) and input_chart[i][j+vision] == '.':
-            vision += 1
-        return '.' if j+vision > len(input_chart[i])-1 else input_chart[i][j+vision]
-    
-    # Diagionals
-    elif direction == 'diag_downL':
-        while i+vision < len(input_chart) and j-vision > -1 and input_chart[i+vision][j-vision] == '.':
-            vision += 1
-        return '.' if (i+vision > len(input_chart)-1 or j-vision < 0) else input_chart[i+vision][j-vision]
-    
-    elif direction == 'diag_downR':
-        while i+vision < len(input_chart) and j+vision < len(input_chart[i]) and input_chart[i+vision][j+vision] == '.':
-            vision += 1
-        return '.' if (i+vision > len(input_chart)-1 or j+vision > len(input_chart[i])-1) else input_chart[i+vision][j+vision]
-    
-    elif direction == 'diag_upR':
-        while i-vision > -1 and j+vision < len(input_chart[i]) and input_chart[i-vision][j+vision] == '.':
-            vision += 1
-        return '.' if (i-vision < 0 or j+vision > len(input_chart[i])-1) else input_chart[i-vision][j+vision]
-    
-    elif direction == 'diag_upL':
-        while i-vision > -1 and j-vision > -1 and input_chart[i-vision][j-vision] == '.':
-            vision += 1
-        return '.' if (i-vision < 0 or j-vision < 0) else input_chart[i-vision][j-vision]
-    else:
-        return None
 
 def process_part2(input_chart):
     new_chart = copy.deepcopy(input_chart)
-    for i, row in enumerate(input_chart):
-        for j, seat in enumerate(row):
-            adjacent = []
-            if seat != '.':
-                up = None if i == 0 else look(i, j, input_chart, 'up')
-                down = None if i == len(input_chart)-1 else look(i, j, input_chart, 'down')
-                right = None if j == len(row)-1 else look(i, j, input_chart, 'right')
-                left = None if j == 0 else look(i, j, input_chart, 'left')
-                diag_downL = None if not (down and left) else look(i, j, input_chart, 'diag_downL')
-                diag_downR = None if not (down and right) else look(i, j, input_chart, 'diag_downR')
-                diag_upL = None if not (up and left) else look(i, j, input_chart, 'diag_upL')
-                diag_upR = None if not (up and right) else look(i, j, input_chart, 'diag_upR')
-                adjacent = [up, down, right, left, diag_downL, diag_downR, diag_upL, diag_upR]
-                if seat == 'L' and '#' not in adjacent:
-                    new_chart[i][j] = '#'
-                elif seat == '#' and adjacent.count('#')>4:
-                    new_chart[i][j] = 'L'
+    for row in range(NUM_ROWS):
+        for col in range(NUM_COLUMNS):
+            if input_chart[row][col] == 'L' and count_neighbors(row, col, input_chart, part2=True) == 0:
+                new_chart[row][col] = '#'
+            elif input_chart[row][col] == '#' and count_neighbors(row, col, input_chart, 5, part2=True) == 5:
+                new_chart[row][col] = 'L'
     return new_chart
 
-# for debugging
 def printChart(chart):
-    for line in chart:
-        print(line)
-    print('---------------------------------------------------')
+    # for debugging
+    if chart:
+        for line in chart:
+            print(line)
+        print('---------------------------------------------------')
 
-def get_solution(chart, part2 = False):
+def get_solution(chart, part2=False):
     # Pick process function
-    if part2:
-        process = process_part2
-    else:
-        process = process_part1
+    process = process_part2 if part2 else process_part1
 
     # While the state is changing, apply function
-    last_result = chart
-    new_result = process(chart)
-    while last_result != new_result:
-        last_result = new_result
-        new_result = process(last_result)
-    
-    # Count unoccupied seats for solution
-    num_taken = 0
-    for row in new_result:
-        num_taken += row.count('#')
-    return num_taken
+    last_result = None
+    while last_result != chart:
+        last_result = chart
+        chart = process(last_result)
+
+    # Count occupied seats for solution
+    return sum(row.count('#') for row in chart)
 
 with open('2020/dec_11/input.txt', 'r') as file:
-    line = file.readline()
-    input = []
-    while line:
-        row = line.strip('\n')
-        input.append([x for x in row])
-        line = file.readline()
+    lines = [x.strip('\n') for x in file.readlines()]
+    input = [list(line) for line in lines]
 
-    print('Problem 1: ', get_solution(input))
-    print('Problem 2: ', get_solution(input, True))
+    NUM_ROWS = len(input)
+    NUM_COLUMNS = len(input[0])
+
+    start = perf_counter()
+    print('Problem 1: ', get_solution(input),
+          '  (Calculated in', perf_counter() - start, 'seconds.)')
+    start = perf_counter()
+    print('Problem 2: ', get_solution(input, part2=True),
+          '  (Calculated in', perf_counter() - start, 'seconds.)')
